@@ -5,7 +5,6 @@ package:
   version: {{ version }}
 
 source:
-  fn: ecm-{{ version }}.tar.gz
   # Unfortunately, the automatically generated tarball from GitLab (which has a
   # stable URL) does not have the same contents as the manually uploaded one,
   # so we need to find each new release manually on
@@ -14,8 +13,7 @@ source:
   sha256: c721dd22e557c4a5dac9ac7e156a400cd2298812dd1f9b56e89966de01471ba8
 
 build:
-  number: 0
-  skip: true        # [win]
+  number: 1
   run_exports:
     # We are not sure if there can be breaking ABI changes in ecm. (There were
     # none in the last few patch releases at least.)
@@ -23,20 +21,25 @@ build:
 
 requirements:
   build:
-    - autoconf       # [linux]
-    - m4
-    - make
-    - libtool  # [unix]
+    - autoconf       # [unix]
+    - m4             # [unix]
+    - make           # [unix]
+    - libtool        # [unix]
     - {{ compiler('c') }}
+    - {{ stdlib('c') }}
+    - autotools_clang_conda  # [win]
   host:
     - gmp
 
 test:
   commands:
-    - test -f $PREFIX/include/ecm.h
-    - test -f $PREFIX/lib/libecm.a
-    - test -f $PREFIX/lib/libecm.so         # [linux]
-    - test -f $PREFIX/lib/libecm.dylib      # [osx]
+    - test -f $PREFIX/include/ecm.h                     # [not win]
+    - test ! -f $PREFIX/lib/libecm.a                    # [not win]
+    - test -f $PREFIX/lib/libecm${SHLIB_EXT}            # [not win]
+    - if not exist %LIBRARY_BIN%\\ecm.dll exit 1        # [win]
+    - if not exist %LIBRARY_LIB%\\ecm.lib exit 1        # [win]
+    - if exist %LIBRARY_LIB%\\ecm_static.lib exit 1     # [win]
+    - if not exist %LIBRARY_INC%\\ecm.h exit 1          # [win]
 
 about:
   home: https://gitlab.inria.fr/zimmerma/ecm
